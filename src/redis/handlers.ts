@@ -1,0 +1,180 @@
+import fs from "node:fs/promises";
+import { NodeMailer, LoggerManager } from "../config/index.js";
+import { validateRecords } from "../helpers/index.js";
+
+export async function handleLoginUpdates(message: string): Promise<void> {
+  try {
+    const loginData = JSON.parse(message);
+    const { content, timestamp } = loginData || {};
+    const { email, ipAddress, link, supportUrl, username, subject } =
+      content || {};
+
+    if (
+      !email ||
+      !ipAddress ||
+      !timestamp ||
+      !link ||
+      !supportUrl ||
+      !username ||
+      !subject
+    ) {
+      console.warn(
+        "Received login update message with missing fields:",
+        loginData,
+      );
+      return;
+    }
+
+    const loginUpdateTemplate = (
+      await fs.readFile("./templates/login-update.html", "utf-8")
+    )
+      .toString()
+      .replace("{{ipAddress}}", ipAddress)
+      .replace("{{timestamp}}", timestamp)
+      .replace("{{link}}", link)
+      .replace("{{supportUrl}}", supportUrl)
+      .replace("{{userName}}", username)
+      .replace("{{subject}}", subject);
+
+    const transporter = NodeMailer.getInstance();
+    const mailOptions = {
+      from: `Coding Works <${NodeMailer.SMTPConfig.user}>`,
+      to: email,
+      subject: "New sign-in detected",
+      text: "This is the plain text body of the email.",
+      html: loginUpdateTemplate,
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(
+      `Mail sent successfully to ${email} for login update notification.`,
+    );
+  } catch (error) {
+    console.error(
+      "Error occurred while sending login update notification:",
+      error,
+    );
+  }
+}
+
+export function handleProfileUpdates(message: string) {
+  // Add your logic to process the profile update message here
+}
+
+export async function handleSkillAddition(message: string) {
+  try {
+    const skillData = JSON.parse(message);
+    const { content, timestamp } = skillData || {};
+    const { email, username, skillName, link, subject, skillExperience } =
+      content || {};
+
+    if (
+      !email ||
+      !username ||
+      !skillName ||
+      !link ||
+      !timestamp ||
+      !subject ||
+      !skillExperience
+    ) {
+      console.warn(
+        "Received skill addition message with missing fields:",
+        skillData,
+      );
+      return;
+    }
+
+    const skillAdditionTemplate = (
+      await fs.readFile("./templates/add-skill.html", "utf-8")
+    )
+      .toString()
+      .replace("{{userName}}", username)
+      .replace("{{skillName}}", skillName)
+      .replace("{{supportUrl}}", link)
+      .replace("{{subject}}", subject)
+      .replace("{{timestamp}}", timestamp)
+      .replace("{{skillExperience}}", skillExperience);
+
+    const transporter = NodeMailer.getInstance();
+    const mailOptions = {
+      from: `Coding Works <${NodeMailer.SMTPConfig.user}>`,
+      to: email,
+      subject: "New Skill Added",
+      text: "This is the plain text body of the email.",
+      html: skillAdditionTemplate,
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(
+      `Mail sent successfully to ${email} for skill addition notification.`,
+    );
+  } catch (error) {
+    console.error(
+      "Error occurred while sending skill addition notification:",
+      error,
+    );
+  }
+}
+
+export async function handleSkillUpdate(message: string) {
+  const logger = LoggerManager.getInstance();
+
+  try {
+    const skillData = JSON.parse(message);
+    const { content, timestamp } = skillData || {};
+    const { email, username, link, subject, skill } = content || {};
+
+    if (!email || !username || !link || !timestamp || !subject) {
+      logger.warn("Received skill update message with missing fields");
+      return;
+    }
+
+    if (!validateRecords(skill)) {
+      logger.warn("Received skill update message with invalid skill data:");
+      return;
+    }
+
+    const {
+      skillName,
+      skillExperience,
+      skillDesc,
+      newSkillName,
+      newSkillExperience,
+      newSkillDesc,
+    } = skill || {};
+
+    const skillUpdateTemplate = (
+      await fs.readFile("./templates/update-skill.html", "utf-8")
+    )
+      .toString()
+      .replace("{{userName}}", username)
+      .replace("{{skillName}}", skillName)
+      .replace("{{supportUrl}}", link)
+      .replace("{{subject}}", subject)
+      .replace("{{timestamp}}", timestamp)
+      .replace("{{skillExperience}}", skillExperience)
+      .replace("{{skillDesc}}", skillDesc)
+      .replace("{{newSkillName}}", newSkillName)
+      .replace("{{newSkillExperience}}", newSkillExperience)
+      .replace("{{newSkillDesc}}", newSkillDesc);
+
+    const transporter = NodeMailer.getInstance();
+    const mailOptions = {
+      from: `Coding Works <${NodeMailer.SMTPConfig.user}>`,
+      to: email,
+      subject: "Skill Updated",
+      text: "This is the plain text body of the email.",
+      html: skillUpdateTemplate,
+    };
+
+    await transporter.sendMail(mailOptions);
+    logger.info(
+      `Mail sent successfully to ${email} for skill update notification.`,
+    );
+  } catch (error) {
+    logger.error(
+      "Error occurred while sending skill update notification:",
+      error,
+    );
+  }
+}
