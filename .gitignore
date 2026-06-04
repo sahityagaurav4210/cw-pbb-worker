@@ -1,3 +1,10 @@
+#Editor
+.vscode/
+
+#Builds
+build/
+dist/
+
 # Logs
 logs
 *.log
