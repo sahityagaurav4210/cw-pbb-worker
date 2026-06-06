@@ -22,7 +22,7 @@ export class Publisher {
     Publisher.instance = new Redis(Publisher.REDIS_URL);
 
     Publisher.instance.on("connect", () => {
-      logger.info("Connected to Redis server.");
+      logger.info("Hurray, publisher is online 🚀🚀🚀🚀.");
     });
 
     Publisher.instance.on("error", (error: Error) => {
