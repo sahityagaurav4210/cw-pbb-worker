@@ -57,10 +57,6 @@ export async function handleLoginUpdates(message: string): Promise<void> {
   }
 }
 
-export function handleProfileUpdates(message: string) {
-  // Add your logic to process the profile update message here
-}
-
 export async function handleSkillAddition(message: string) {
   try {
     const skillData = JSON.parse(message);
@@ -174,6 +170,58 @@ export async function handleSkillUpdate(message: string) {
   } catch (error) {
     logger.error(
       "Error occurred while sending skill update notification:",
+      error,
+    );
+  }
+}
+
+export async function handleProfileUpdate(message: string) {
+  const logger = LoggerManager.getInstance();
+
+  try {
+    const skillData = JSON.parse(message);
+    const { content, timestamp } = skillData || {};
+    const { email, ...payload } = content || {};
+
+    if (!email) {
+      logger.warn("Received skill update message with missing fields");
+      return;
+    }
+
+    if (!validateRecords(payload)) {
+      logger.warn("Received profile update message with invalid profile data");
+      return;
+    }
+
+    const { userName, profileLink, link, subject, supportUrl } = payload || {};
+
+    const skillUpdateTemplate = (
+      await fs.readFile("./templates/profile-update.html", "utf-8")
+    )
+      .toString()
+      .replace("{{userName}}", userName)
+      .replace("{{supportUrl}}", supportUrl)
+      .replace("{{subject}}", subject)
+      .replace("{{timestamp}}", timestamp)
+      .replaceAll("{{profileLink}}", profileLink)
+      .replaceAll("{{link}}", link);
+
+    const transporter = NodeMailer.getInstance();
+    const mailOptions = {
+      from: `Coding Works <${NodeMailer.SMTPConfig.user}>`,
+      to: email,
+      subject: "Profile Updated",
+      text: "This is the plain text body of the email.",
+      html: skillUpdateTemplate,
+    };
+
+    await transporter.sendMail(mailOptions);
+    logger.info(
+      `Mail sent successfully to ${email} for profile update notification.`,
+    );
+  } catch (error) {
+    logger.error(
+      "Error occurred while sending profile update notification:",
       error,
     );
   }

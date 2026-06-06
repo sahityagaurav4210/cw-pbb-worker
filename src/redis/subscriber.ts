@@ -3,7 +3,7 @@ import { RedisConstants } from "../constants.js";
 import { LoggerManager } from "../config/index.js";
 import {
   handleLoginUpdates,
-  handleProfileUpdates,
+  handleProfileUpdate,
   handleSkillAddition,
   handleSkillUpdate,
 } from "./handlers.js";
@@ -42,7 +42,7 @@ export class Subscriber {
     Subscriber.instance = new Redis(Subscriber.REDIS_URL);
 
     Subscriber.instance.on("connect", () => {
-      logger.info("Connected to Redis server.");
+      logger.info("Hurray, subscriber is online 🚀🚀🚀🚀.");
     });
 
     Subscriber.instance.on("error", (error: Error) => {
@@ -59,7 +59,7 @@ export class Subscriber {
             break;
 
           case RedisConstants.PROFILE_UPDATE_CHANNEL_NAME:
-            handleProfileUpdates(message);
+            await handleProfileUpdate(message);
             break;
 
           case RedisConstants.SKILL_ADDITION_CHANNEL_NAME:
