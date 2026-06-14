@@ -3,6 +3,8 @@ import { NodeMailer, LoggerManager } from "../config/index.js";
 import { validateRecords } from "../helpers/index.js";
 
 export async function handleLoginUpdates(message: string): Promise<void> {
+  const logger = LoggerManager.getInstance();
+
   try {
     const loginData = JSON.parse(message);
     const { content, timestamp } = loginData || {};
@@ -46,11 +48,11 @@ export async function handleLoginUpdates(message: string): Promise<void> {
     };
 
     await transporter.sendMail(mailOptions);
-    console.log(
+    logger.info(
       `Mail sent successfully to ${email} for login update notification.`,
     );
   } catch (error) {
-    console.error(
+    logger.error(
       "Error occurred while sending login update notification:",
       error,
     );
